@@ -63,6 +63,12 @@ Tater Jarvis Screen core.
 Phase 1 is display-complete; the browser client's interactive/audio-
 heavy surface is still to port, in this order:
 
+- SAT-linked wake-word reaction (launch requirement): a turn spoken at a
+  linked ceiling SAT makes the wall screen react as if the screen itself
+  picked up — wake animation + reactor pulse from the utterance's `rms`
+  envelope on the core's `voice_turn` SSE event; visual-only, never
+  double audio (first needs the core-side satellite-voice-mirror
+  contract to publish `voice_turn`)
 - Camera-event popups (events already parsed; popup overlay UI pending)
 - Live MJPEG camera feeds (snapshot-only today)
 - TTS + music audio playback (captions + reactor pulse already work)
