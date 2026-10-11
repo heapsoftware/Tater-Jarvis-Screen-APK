@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# pre-commit privacy gate — this repo may go public.
+# Blocks staged content that leaks personal / network / credential info.
+# If this blocks a commit: the STAGED CONTENT is the problem. Fix it, or
+# use a documented placeholder (CLAUDE.md "Privacy rules"). Never bypass.
+set -euo pipefail
+
+# Allowlisted substrings are neutralized (not whole lines skipped), so a
+# real leak on the same line still gets caught.
+ALLOWED='192\.0\.2\.[0-9]{1,3}|198\.51\.100\.[0-9]{1,3}|203\.0\.113\.[0-9]{1,3}|10\.0\.2\.[0-9]|localhost|127\.0\.0\.1|example\.(com|org|net)|noreply@[^ ,;)\"]+|00:00:00:00:00:00'
+
+staged=$(git diff --cached --unified=0 --no-color -- \
+  | grep -E '^\+' | grep -vE '^\+\+\+' || true)
+staged_neutral=$(printf '%s\n' "$staged" | sed -E "s/($ALLOWED)/#ok#/g")
+
+check() {
+  local name="$1" pattern="$2" hits
+  hits=$(printf '%s\n' "$staged_neutral" | grep -En "$pattern" || true)
+  if [ -n "$hits" ]; then
+    printf '\nPrivacy gate: %s detected in staged addition(s):\n%s\n' \
+      "$name" "$hits" >&2
+    FAIL=1
+  fi
+}
+
+FAIL=0
+check "private/internal IP (10.x/172.16-31.x/192.168.x/169.254.x)" \
+  '\b(10\.[0-9]+\.[0-9]+\.[0-9]+|172\.(1[6-9]|2[0-9]|3[01])\.[0-9]+\.[0-9]+|192\.168\.[0-9]+\.[0-9]+|169\.254\.[0-9]+\.[0-9]+)\b'
+check "email address" \
+  '\b[A-Za-z0-9._%+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+\b'
+check "credential / private key" \
+  '(ghp_[A-Za-z0-9]{36}|gho_[A-Za-z0-9]{36}|ghs_[A-Za-z0-9]{36}|gh_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{22,}|AKIA[0-9A-Z]{16}|BEGIN (EC|RSA|OPENSSH|PGP|DSA) PRIVATE KEY)'
+check "MAC address" \
+  '\b([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}\b'
+check "local username" '\bjarvisui\b'
+
+if [ "$FAIL" -ne 0 ]; then
+  printf '\nCommit refused. Replace with a placeholder (see CLAUDE.md:\n192.0.2.x / screen.example.com), or keep real values OUT of the repo.\nDo NOT bypass this hook; fix before any push.\n' >&2
+  exit 1
+fi
+exit 0
