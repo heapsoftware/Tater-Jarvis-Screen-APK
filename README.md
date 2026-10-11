@@ -9,23 +9,6 @@ No WebView wrapper: the HUD renders natively, consumes the core's SSE
 state stream (`GET /events`) and REST command surface, and later phases
 add on-device voice and wake-word detection.
 
-## Planned phases
-
-**Phase 2 — APK voice** (planned): the tablet's own mic becomes a Jarvis
-input. Audio playback on the APK (captions and reactor pulses already
-render — play the server-rendered TTS audio); tap-to-talk capture (16 kHz
-PCM16 → `POST /api/voice`, server-side STT → voice turn → TTS);
-follow-up conversations; and per-screen mic capture tuning (echo
-cancellation / noise suppression / auto gain / rate / size). Starts only
-after a core-side origin-identity decision (APK turns need a distinct
-platform/origin from the browser's `webui`).
-
-**Phase 3 — on-device wake word** (planned): "hey jarvis" running
-natively (ONNX Runtime / NDK over the core's openWakeWord models instead
-of browser WASM). The tablet becomes one more wake-point; when a linked
-ceiling SAT wins pickup, the screen reacts visually — wake reaction +
-utterance `rms` envelope pulse — and never voices the same turn twice.
-
 ## What it does (Phase 1)
 
 - Streams the core's screen bus over SSE (`/events?screen=<key>` — initial
@@ -75,26 +58,40 @@ The app opens in kiosk mode; run the built-in config form once
 (server URL + screen key + optional token) to connect it to your
 Tater Jarvis Screen core.
 
-## Roadmap — remaining full-port features
+## Roadmap — build order
 
-Phase 1 is display-complete; the browser client's interactive/audio-
-heavy surface is still to port, in this order:
+Phase 1 is display-complete. The rest, in work order — the phase each
+item belongs to is tagged on the item:
 
-- SAT-linked wake-word reaction (launch requirement): most SAT behavior
-  (actions routed to the linked screen; voice-turn captions + reply
-  envelope pulses) already works through existing events. Remaining is
-  the pre-reply part — the screen reacting as if IT picked up the wake
-  word (wake animation + pulse from the utterance's `rms` envelope on
-  the planned `voice_turn` event); visual-only, never double audio
-  (first needs the core-side satellite-voice-mirror contract)
-- Camera-event popups (events already parsed; popup overlay UI pending)
-- Live MJPEG camera feeds (snapshot-only today)
-- TTS + music audio playback (captions + reactor pulse already work)
-- Voice input: tap-to-talk mic → `POST /api/voice`, follow-ups, mic
-  capture tuning
-- On-device wake word ("hey jarvis") — native ONNX scoring of the core's
-  openWakeWord models instead of browser WASM
-- Edit-mode placement editor
-- Server-rendered embed cards (web / youtube / video / device camera)
+- **SAT-linked wake-word reaction (launch requirement)** — most SAT
+  behavior (actions routed to the linked screen; voice-turn captions +
+  reply envelope pulses) already works through existing events. Remaining
+  is the pre-reply part — the screen reacting as if IT picked up the wake
+  word (wake animation + pulse from the utterance's `rms` envelope on the
+  planned `voice_turn` event); visual-only, never double audio (first
+  needs the core-side satellite-voice-mirror contract).
+- **Camera-event popups** — `camera_popup` / `cam_snap` events are
+  already parsed into state; popup overlay UI pending.
+- **Live MJPEG camera feeds** — `ha_camera` cards are snapshot-only
+  today.
+- **Audio playback on the APK (Phase 2 entry)** — captions + reactor
+  pulses already render; play the server-rendered TTS audio
+  (`/api/audio/<ref>`) and act as an audio sink — including the
+  per-screen success/fail/unlock voices.
+- **Voice input (Phase 2)** — tap-to-talk mic → `POST /api/voice`
+  (16 kHz PCM16, server-side STT → voice turn → TTS), follow-up
+  conversations, per-screen mic capture tuning (echo cancellation / noise
+  suppression / auto gain / rate / size). Blocked on the core-side
+  origin-identity decision (APK turns need a distinct platform/origin
+  from the browser's `webui`).
+- **On-device wake word (Phase 3)** — "hey jarvis" running natively
+  (ONNX Runtime / NDK over the core's openWakeWord models instead of
+  browser WASM); the tablet becomes one more wake-point that may win
+  pickup.
+- **Edit-mode placement editor** — the browser's visual "Edit Layout on
+  Screen" drag editor.
+- **Server-rendered embed cards** — `web` / `youtube` / `video` /
+  device-`camera` cards (incl. the headless-Chromium CDP pipeline) show
+  an on-style native placeholder today.
 
 See `CHANGELOG.md` for release history.
