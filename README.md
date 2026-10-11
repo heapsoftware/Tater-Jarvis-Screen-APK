@@ -9,11 +9,6 @@ No WebView wrapper: the HUD renders natively, consumes the core's SSE
 state stream (`GET /events`) and REST command surface, and later phases
 add on-device voice and wake-word detection.
 
-> **No source code is published for this project.** This repository
-> carries release notes and signed APK assets only. The app's source
-> stays private; what ships to the core's bus and what stays on-device
-> is documented in the project privacy notes below.
-
 ## What it does (Phase 1)
 
 - Streams the core's screen bus over SSE (`/events?screen=<key>` — initial
