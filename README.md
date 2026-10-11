@@ -9,6 +9,23 @@ No WebView wrapper: the HUD renders natively, consumes the core's SSE
 state stream (`GET /events`) and REST command surface, and later phases
 add on-device voice and wake-word detection.
 
+## Planned phases
+
+**Phase 2 — APK voice** (planned): the tablet's own mic becomes a Jarvis
+input. Audio playback on the APK (captions and reactor pulses already
+render — play the server-rendered TTS audio); tap-to-talk capture (16 kHz
+PCM16 → `POST /api/voice`, server-side STT → voice turn → TTS);
+follow-up conversations; and per-screen mic capture tuning (echo
+cancellation / noise suppression / auto gain / rate / size). Starts only
+after a core-side origin-identity decision (APK turns need a distinct
+platform/origin from the browser's `webui`).
+
+**Phase 3 — on-device wake word** (planned): "hey jarvis" running
+natively (ONNX Runtime / NDK over the core's openWakeWord models instead
+of browser WASM). The tablet becomes one more wake-point; when a linked
+ceiling SAT wins pickup, the screen reacts visually — wake reaction +
+utterance `rms` envelope pulse — and never voices the same turn twice.
+
 ## What it does (Phase 1)
 
 - Streams the core's screen bus over SSE (`/events?screen=<key>` — initial
